@@ -61,6 +61,7 @@ def profiles_from_bulk(path: str | Path, organisation_numbers: Iterable[str]) ->
     snapshot_sha256 = hashlib.sha256(Path(path).read_bytes()).hexdigest()
     retrieved_at = utc_now()
     found: dict[str, dict[str, Any]] = {}
+    source_urls: set[str] = set()
     scanned = 0
     for profile in iter_bulk(path):
         scanned += 1
@@ -68,12 +69,14 @@ def profiles_from_bulk(path: str | Path, organisation_numbers: Iterable[str]) ->
         if org not in wanted:
             continue
         raw = profile.pop("raw", {})
+        source_url = profile.pop("snapshot_source_url", "https://data.brreg.no/enhetsregisteret/api/enheter/lastned/csv")
+        source_urls.add(source_url)
         profile["evidence"] = {
             "registry": evidence(
                 "registry",
                 "available",
                 "official_registry_bulk",
-                "https://data.brreg.no/enhetsregisteret/api/enheter/lastned/csv",
+                source_url,
                 value=raw,
                 retrieved_at=retrieved_at,
                 content_sha256=snapshot_sha256,
@@ -92,6 +95,7 @@ def profiles_from_bulk(path: str | Path, organisation_numbers: Iterable[str]) ->
         "registry_rows_scanned": scanned,
         "requested": len(requested),
         "selected": len(found),
+        "registry_snapshot_source_urls": sorted(source_urls),
     }
 
 

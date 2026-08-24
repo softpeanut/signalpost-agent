@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import gzip
 import hashlib
+import json
 import random
 import heapq
 import urllib.parse
@@ -40,6 +41,28 @@ def normalize_row(row: dict[str, str]) -> dict[str, Any]:
         "website": _first(row, "hjemmeside", "Hjemmeside"),
         "latest_submitted_accounts": _first(row, "sisteInnsendteAarsregnskap", "Siste innsendte årsregnskap"),
         "raw": row,
+    }
+
+
+def normalize_api_row(row: dict[str, Any], *, source_url: str) -> dict[str, Any]:
+    legal_form = row.get("organisasjonsform") or {}
+    address = row.get("forretningsadresse") or {}
+    industry = row.get("naeringskode1") or {}
+    return {
+        "organisation_number": str(row.get("organisasjonsnummer") or ""),
+        "name": str(row.get("navn") or ""),
+        "legal_form": str(legal_form.get("kode") or ""),
+        "employees": row.get("antallAnsatte") if isinstance(row.get("antallAnsatte"), int) else None,
+        "bankrupt": bool(row.get("konkurs")),
+        "liquidating": bool(row.get("underAvvikling")),
+        "municipality": str(address.get("kommune") or ""),
+        "municipality_number": str(address.get("kommunenummer") or ""),
+        "industry_code": str(industry.get("kode") or ""),
+        "industry_label": str(industry.get("beskrivelse") or ""),
+        "website": str(row.get("hjemmeside") or ""),
+        "latest_submitted_accounts": str(row.get("sisteInnsendteAarsregnskap") or ""),
+        "raw": row,
+        "snapshot_source_url": source_url,
     }
 
 
@@ -142,6 +165,20 @@ def deterministic_financial_filer_sample(
 
 
 def iter_bulk(path: str | Path) -> Iterable[dict[str, Any]]:
+    source = Path(path)
+    if source.suffix == ".json":
+        body = json.loads(source.read_text(encoding="utf-8"))
+        rows = body.get("_embedded", {}).get("enheter") if isinstance(body, dict) else None
+        if not isinstance(rows, list):
+            raise ValueError("Registry JSON snapshot must contain _embedded.enheter")
+        source_url = str(body.get("source_url") or "https://data.brreg.no/enhetsregisteret/api/enheter")
+        for row in rows:
+            if not isinstance(row, dict):
+                raise ValueError("Registry JSON snapshot entity must be an object")
+            record = normalize_api_row(row, source_url=source_url)
+            if len(record["organisation_number"]) == 9:
+                yield record
+        return
     with gzip.open(path, "rt", encoding="utf-8-sig", newline="") as handle:
         sample = handle.read(8192)
         handle.seek(0)

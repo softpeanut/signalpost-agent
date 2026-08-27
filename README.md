@@ -75,3 +75,29 @@ Submit a repository with:
 - declared models, APIs, licences and source-rights assumptions.
 
 Email the repository URL, run command, models/APIs and expected cost per 100-company run to `submit@builderr.ai`.
+
+## Submitted 1,000-company run
+
+The reproducible entry artifacts are in `submission/`:
+
+- `manifest.jsonl`: the deterministic organisation-number input;
+- `profiles.jsonl`: 1,000 completed public-data profiles;
+- `envelopes.jsonl`: exactly one terminal envelope per input;
+- `run-report.json`: request, runtime, source and validation evidence.
+
+Re-run the entry with the official selected registry snapshot using:
+
+```bash
+uv run python scripts/run_competition_batch.py \
+  --organisations submission/manifest.jsonl \
+  --bulk data/raw/entry-registry-1000.json \
+  --profiles-output out/profiles.jsonl \
+  --output out/envelopes.jsonl \
+  --report out/run-report.json \
+  --run-id signalpost-full-1000-20260827 \
+  --expected-count 1000 --workers 8 --checkpoint-every 25
+```
+
+The frozen registry snapshot is not duplicated in Git because it is a generated selection of the
+official BRREG endpoint. Its SHA-256 and source URL are recorded in `run-report.json`; the adapter
+and snapshot-integrity tests are included in this repository. The run used no paid API or model.

@@ -1,0 +1,45 @@
+{
+  "run_id": "signalpost-full-1000-20260827",
+  "started_at": "2026-08-27T01:34:41.235569Z",
+  "completed_at": "2026-08-27T01:49:35.100181Z",
+  "expected_count": 1000,
+  "emitted_envelopes": 1000,
+  "resumed_profiles": 0,
+  "profiles_fetched_this_run": 1000,
+  "modules": [
+    "registry",
+    "accounting_obligation",
+    "registry_live",
+    "financials",
+    "roles",
+    "group",
+    "locations",
+    "website"
+  ],
+  "registry": {
+    "registry_snapshot_sha256": "643ee4f829f18e5a49241c89467c4a5b8207c2a2718bbba6f082666604b31471",
+    "registry_rows_scanned": 1000,
+    "requested": 1000,
+    "selected": 1000,
+    "registry_snapshot_source_urls": [
+      "https://data.brreg.no/enhetsregisteret/api/enheter"
+    ]
+  },
+  "operations": {
+    "requests": 5604,
+    "bytes": 66403828,
+    "p50_ms": 1234,
+    "p95_ms": 1311
+  },
+  "validation": {
+    "passed": true,
+    "checks": {
+      "exact_expected_count": true,
+      "unique_organisation_numbers": true,
+      "all_entity_states_terminal": true,
+      "all_module_states_terminal": true,
+      "zero_silent_drops": true
+    },
+    "invalid_states": []
+  }
+}
